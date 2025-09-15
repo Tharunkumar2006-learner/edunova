@@ -1,0 +1,112 @@
+/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f9;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    color: #333;
+  }
+  
+  header {
+    background: #4CAF50;
+    color: white;
+    padding: 1rem;
+  }
+  
+  header h1 {
+    margin: 0;
+    font-size: 2rem;
+  }
+  
+  header p {
+    font-size: 1rem;
+    margin-top: 0.5rem;
+  }
+  
+  /* Sudoku Container */
+  .sudoku-container {
+    display: flex;
+    justify-content: center;
+    margin: 2rem auto;
+  }
+  
+  .sudoku-board {
+    border-collapse: collapse;
+  }
+  
+  .sudoku-board td {
+    border: 1px solid #999;
+    width: 40px;
+    height: 40px;
+    text-align: center;
+  }
+  
+  .sudoku-board input {
+    width: 100%;
+    height: 100%;
+    border: none;
+    text-align: center;
+    font-size: 1.2rem;
+    outline: none;
+  }
+  
+  /* Thicker borders for 3x3 boxes */
+  .sudoku-board tr:nth-child(3n) td {
+    border-bottom: 3px solid #333;
+  }
+  
+  .sudoku-board td:nth-child(3n) {
+    border-right: 3px solid #333;
+  }
+  
+  .sudoku-board tr:first-child td {
+    border-top: 3px solid #333;
+  }
+  
+  .sudoku-board td:first-child {
+    border-left: 3px solid #333;
+  }
+  
+  /* Controls */
+  .controls {
+    margin: 1.5rem;
+  }
+  
+  .controls button {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    margin: 0.5rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: 0.3s;
+  }
+  
+  .controls button:hover {
+    background: #2E7D32;
+    transform: scale(1.05);
+  }
+  
+  /* Footer */
+  footer {
+    background: #2E7D32;
+    color: white;
+    padding: 1rem;
+    margin-top: 2rem;
+  }
+  
+  /* Fixed clue cells */
+.sudoku-board input.fixed {
+  background: #eef8ef;
+  font-weight: bold;
+  color: #2E7D32;
+}
+
+/* Invalid/conflict input */
+.sudoku-board input.invalid {
+  outline: 2px solid #e53935;
+  background: #ffeaea;
+}

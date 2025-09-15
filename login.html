@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edunova - Login</title>
+  <link rel="stylesheet" href="login.css">
+</head>
+<body>
+  <div class="login-container">
+    <h1 class="site-name">Edunova</h1>
+    <p class="quote">"Learning is the key to unlocking potential."</p>
+
+    <!-- Login Form -->
+    <form id="loginForm" class="form active">
+      <label for="username">Username</label>
+      <input type="text" id="username" placeholder="Enter your ID" required>
+
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="Enter your password" required>
+
+      <button type="submit">Login</button>
+      <p id="errorMsg" class="error"></p>
+
+      <p class="switch-form">New user? <a href="#" id="showRegister">Register</a></p>
+    </form>
+
+    <!-- Registration Form -->
+    <form id="registerForm" class="form">
+      <label for="name">Name</label>
+      <input type="text" id="name" placeholder="Enter your name" required>
+
+      <label for="standard">Standard</label>
+      <input type="text" id="standard" placeholder="Enter your class" required>
+
+      <label for="section">Section</label>
+      <input type="text" id="section" placeholder="Enter your section" required>
+
+      <label for="father">Father/Guardian Name</label>
+      <input type="text" id="father" placeholder="Enter father/guardian name" required>
+
+      <label for="school">School Name</label>
+      <input type="text" id="school" placeholder="Enter school name" required>
+
+      <label for="phone">Phone Number</label>
+      <input type="text" id="phone" placeholder="Enter phone number" required>
+
+      <button type="submit">Register</button>
+
+      <p class="switch-form">Already have an account? <a href="#" id="showLogin">Login</a></p>
+    </form>
+  </div>
+
+  <script>
+    // Switch between forms
+    document.getElementById("showRegister").onclick = function() {
+      document.getElementById("loginForm").classList.remove("active");
+      document.getElementById("registerForm").classList.add("active");
+    };
+    document.getElementById("showLogin").onclick = function() {
+      document.getElementById("registerForm").classList.remove("active");
+      document.getElementById("loginForm").classList.add("active");
+    };
+
+    // Hardcoded login
+    document.getElementById("loginForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+
+      if (username === "SIT23CS021" && password === "STK123") {
+        alert("Welcome " + username + "!");
+        window.location.href = "index.html"; // redirect to index page
+      } else {
+        document.getElementById("errorMsg").textContent = "Invalid Username or Password!";
+      }
+    });
+
+    // Dummy register (just alerts for now)
+    document.getElementById("registerForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      alert("Registration successful! Please login with your credentials.");
+      document.getElementById("registerForm").classList.remove("active");
+      document.getElementById("loginForm").classList.add("active");
+    });
+  </script>
+</body>
+</html>

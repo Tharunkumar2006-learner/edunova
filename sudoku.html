@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sudoku Master - EduQuest</title>
+  <link rel="stylesheet" href="sudoku.css"/>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <h1>Sudoku Master</h1>
+    <p>Sharpen your mind with Sudoku challenges!</p>
+  </header>
+
+  <!-- Sudoku Container -->
+  <main>
+    <section class="sudoku-container">
+      <div id="sudoku-root"></div>
+    </section>
+
+    <!-- Controls -->
+    <section class="controls">
+      <a href="#" id="newGame"><button>New Game</button></a>
+      <a href="#" id="check"><button>Check Solution</button></a>
+      <a href="#" id="reset"><button>Reset</button></a>
+      <a href="index.html"><button>Back to Home</button></a>
+    </section>
+
+    <!-- Difficulty -->
+    <section class="controls">
+      <label for="difficulty">Difficulty:</label>
+      <select id="difficulty">
+        <option value="38">Easy</option>
+        <option value="32" selected>Medium</option>
+        <option value="26">Hard</option>
+      </select>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2025 EduQuest | Sudoku Master</p>
+  </footer>
+
+  <script>
+    // -------------------------
+    // Sudoku Generator + UI
+    // -------------------------
+    const N = 9;
+    const BOX = 3;
+
+    let solutionBoard = null;   // 9x9 solved board
+    let puzzleBoard = null;     // 9x9 puzzle (0 for empty)
+    let fixedMask = null;       // boolean 9x9: true if fixed/clue
+    let originalPuzzle = null;  // for reset
+
+    // Utility
+    const cloneBoard = b => b.map(row => row.slice());
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function isSafe(board, r, c, num) {
+      // Row/Col
+      for (let i = 0; i < N; i++) {
+        if (board[r][i] === num) return false;
+        if (board[i][c] === num) return false;
+      }
+      // Box
+      const br = Math.floor(r / BOX) * BOX;
+      const bc = Math.floor(c / BOX) * BOX;
+      for (let i = 0; i < BOX; i++) {
+        for (let j = 0; j < BOX; j++) {
+          if (board[br + i][bc + j] === num) return false;
+        }
+      }
+      return true;
+    }
+
+    // Backtracking solver; returns true and mutates board in-place
+    function solve(board) {
+      for (let r = 0; r < N; r++) {
+        for (let c = 0; c < N; c++) {
+          if (board[r][c] === 0) {
+            const nums = shuffle([1,2,3,4,5,6,7,8,9]);
+            for (const n of nums) {
+              if (isSafe(board, r, c, n)) {
+                board[r][c] = n;
+                if (solve(board)) return true;
+                board[r][c] = 0;
+              }
+            }
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+
+    // Count solutions (prunes at 2)
+    function countSolutions(board) {
+      let count = 0;
+      function backtrack() {
+        if (count > 1) return; // prune
+        for (let r = 0; r < N; r++) {
+          for (let c = 0; c < N; c++) {
+            if (board[r][c] === 0) {
+              for (let n = 1; n <= 9; n++) {
+                if (isSafe(board, r, c, n)) {
+                  board[r][c] = n;
+                  backtrack();
+                  board[r][c] = 0;
+                  if (count > 1) return;
+                }
+              }
+              return; // no number fits here
+            }
+          }
+        }
+        count++;
+      }
+      backtrack();
+      return count;
+    }
+
+    function generateFullSolution() {
+      const board = Array.from({length: N}, () => Array(N).fill(0));
+      // Seed a random row for variety
+      const firstRow = shuffle([1,2,3,4,5,6,7,8,9]);
+      board[0] = firstRow.slice();
+      solve(board);
+      return board;
+    }
+
+    // Remove cells until "clues" remain, ensuring uniqueness
+    // clues = number of filled cells to keep (e.g., Easy 38, Medium 32, Hard 26)
+    function makePuzzleFromSolution(sol, clues) {
+      const puzzle = cloneBoard(sol);
+      const cells = [];
+      for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) cells.push([r, c]);
+      shuffle(cells);
+
+      let toRemove = N*N - clues;
+      for (const [r, c] of cells) {
+        if (toRemove <= 0) break;
+        const backup = puzzle[r][c];
+        if (backup === 0) continue;
+        puzzle[r][c] = 0;
+
+        // Check uniqueness by counting solutions
+        const temp = cloneBoard(puzzle);
+        const solCount = countSolutions(temp);
+        if (solCount !== 1) {
+          // revert if uniqueness breaks
+          puzzle[r][c] = backup;
+        } else {
+          toRemove--;
+        }
+      }
+      return puzzle;
+    }
+
+    // Render
+    function renderBoard(puzzle, fixed) {
+      const root = document.getElementById('sudoku-root');
+      root.innerHTML = ''; // clear
+
+      const table = document.createElement('table');
+      table.className = 'sudoku-board';
+      const tbody = document.createElement('tbody');
+
+      for (let r = 0; r < N; r++) {
+        const tr = document.createElement('tr');
+        for (let c = 0; c < N; c++) {
+          const td = document.createElement('td');
+          const inp = document.createElement('input');
+          inp.maxLength = 1;
+          inp.inputMode = 'numeric';
+          inp.autocomplete = 'off';
+          inp.setAttribute('data-row', r);
+          inp.setAttribute('data-col', c);
+
+          const val = puzzle[r][c];
+          if (val !== 0) {
+            inp.value = val;
+            inp.disabled = true;
+            inp.classList.add('fixed');
+          } else {
+            inp.value = '';
+          }
+
+          // Allow only digits 1-9
+          inp.addEventListener('input', (e) => {
+            let v = e.target.value.replace(/[^1-9]/g, '');
+            if (v.length > 1) v = v[0];
+            e.target.value = v;
+
+            // simple conflict highlight
+            highlightConflicts();
+          });
+
+          td.appendChild(inp);
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+      table.appendChild(tbody);
+      root.appendChild(table);
+
+      // Box borders (CSS already handles thickness via nth-child)
+      highlightConflicts();
+    }
+
+    function boardFromInputs() {
+      const b = Array.from({length: N}, () => Array(N).fill(0));
+      const inputs = document.querySelectorAll('.sudoku-board input');
+      inputs.forEach(inp => {
+        const r = +inp.getAttribute('data-row');
+        const c = +inp.getAttribute('data-col');
+        const v = inp.value ? parseInt(inp.value, 10) : 0;
+        b[r][c] = isNaN(v) ? 0 : v;
+      });
+      return b;
+    }
+
+    function highlightConflicts() {
+      // Remove previous flags
+      document.querySelectorAll('.sudoku-board input').forEach(i => i.classList.remove('invalid'));
+
+      const b = boardFromInputs();
+
+      // mark conflicts
+      for (let r = 0; r < N; r++) {
+        for (let c = 0; c < N; c++) {
+          const v = b[r][c];
+          if (v === 0) continue;
+
+          // check row
+          for (let cc = 0; cc < N; cc++) {
+            if (cc !== c && b[r][cc] === v) markInvalid(r,c);
+          }
+          // check col
+          for (let rr = 0; rr < N; rr++) {
+            if (rr !== r && b[rr][c] === v) markInvalid(r,c);
+          }
+          // check box
+          const br = Math.floor(r/BOX)*BOX, bc = Math.floor(c/BOX)*BOX;
+          for (let i = 0; i < BOX; i++) for (let j = 0; j < BOX; j++) {
+            const rr = br+i, cc = bc+j;
+            if ((rr !== r || cc !== c) && b[rr][cc] === v) markInvalid(r,c);
+          }
+        }
+      }
+    }
+
+    function markInvalid(r, c) {
+      const sel = `.sudoku-board input[data-row="${r}"][data-col="${c}"]`;
+      const el = document.querySelector(sel);
+      if (el) el.classList.add('invalid');
+    }
+
+    // Actions
+    function newGame() {
+      const clues = parseInt(document.getElementById('difficulty').value, 10);
+      solutionBoard = generateFullSolution();
+      puzzleBoard = makePuzzleFromSolution(solutionBoard, clues);
+      originalPuzzle = cloneBoard(puzzleBoard);
+
+      fixedMask = puzzleBoard.map(row => row.map(v => v !== 0));
+      renderBoard(puzzleBoard, fixedMask);
+    }
+
+    function resetBoard() {
+      puzzleBoard = cloneBoard(originalPuzzle);
+      renderBoard(puzzleBoard, fixedMask);
+    }
+
+    function checkSolution() {
+      // Valid if fully filled and equals the solution
+      const b = boardFromInputs();
+      // quick completeness check
+      for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+        if (b[r][c] === 0) {
+          alert('Fill all cells before checking!');
+          return;
+        }
+      }
+      // compare to solution
+      for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+        if (b[r][c] !== solutionBoard[r][c]) {
+          alert('Not quite right yet. Keep trying!');
+          return;
+        }
+      }
+      alert('🎉 Correct! You solved the Sudoku!');
+    }
+
+    // Wire up controls (with anchors as requested)
+    document.getElementById('newGame').addEventListener('click', (e) => {
+      e.preventDefault();
+      newGame();
+    });
+    document.getElementById('reset').addEventListener('click', (e) => {
+      e.preventDefault();
+      resetBoard();
+    });
+    document.getElementById('check').addEventListener('click', (e) => {
+      e.preventDefault();
+      checkSolution();
+    });
+
+    // Initial
+    window.addEventListener('DOMContentLoaded', newGame);
+  </script>
+</body>
+</html>
